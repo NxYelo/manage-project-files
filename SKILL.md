@@ -21,13 +21,13 @@ Read `references/governance.md` when explaining folder purpose, flow, precedence
 
 ## Run the tool
 
-Locate `scripts/manage_project_files.py`, then use the available Python runtime.
+Locate `scripts/manage_project_files.py`, then use the available Python runtime. On Windows, run with `-X utf8`. If `python` and `py` are unavailable, use Codex workspace dependency discovery and call the returned bundled Python executable directly; do not download or install another interpreter merely to run this Skill.
 
 ### Create structures
 
-- Preview a workspace: `python manage_project_files.py init-workspace --root <path> [--knowledge-root <path>]`
+- Preview a workspace: `python -X utf8 manage_project_files.py init-workspace --root <path> [--knowledge-root <path>]`
 - Create after approval: add `--apply`.
-- Preview a project: `python manage_project_files.py init-project --root <workspace> --name "YYYYMM 项目名" [--with-unfiled]`
+- Preview a project: `python -X utf8 manage_project_files.py init-project --root <workspace> --name "YYYYMM 项目名" [--with-unfiled]`
 - Create after approval: add `--apply`.
 
 Never pass `--apply` until the user has seen the preview or explicitly requested immediate creation.
@@ -43,7 +43,7 @@ Run `audit --root <workspace> --format markdown` for a read-only report. Use `--
 ### Remediate
 
 1. Run `plan-fix --root <workspace> --output <plan.json>`.
-2. Review every action with the user. `review` items are informational and cannot execute.
+2. Review every action with the user. `review` items are informational and cannot execute. When a mapping resolves an existing review item, the plan intentionally retains the audit evidence and adds a separate executable action; approve only the executable action ID.
 3. For ambiguous root files, prepare an external mapping JSON from relative source path to a standard destination folder and regenerate with `--mapping <mapping.json>`.
 4. Apply only approved action IDs: `apply --plan <plan.json> --approve A001,A002 --confirm APPLY`.
 5. Run `verify` and report resolved, remaining, and skipped items.
