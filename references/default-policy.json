@@ -1,0 +1,16 @@
+{
+  "policy_version": "1.4",
+  "required_dirs": ["00_输入待分配", "01_需求输入", "02-项目策划", "03_参考资料", "04_项目执行资料", "05_知识沉淀", "98_历史归档", "temp"],
+  "optional_dirs": ["99_未归档"],
+  "archive_dir": "归档",
+  "workspace_files": ["00_工作区文件管理规则.md", "00_巡检清单.md", "00_项目总索引.md"],
+  "project_files": ["00_README.md", "00_文件分类与归档规则.md"],
+  "intake_days": 7,
+  "inactive_days": 180,
+  "infrastructure_dirs": [".git", ".codex", ".agents", ".workbuddy", ".vscode", ".pnpm-store", "node_modules", "__pycache__"],
+  "business_extensions": [".md", ".xlsx", ".xls", ".pptx", ".pdf", ".docx", ".png", ".jpg", ".jpeg", ".svg", ".txt", ".py", ".js", ".ts", ".csv", ".zip"],
+  "ambiguous_status_terms": ["最终版", "最终最终版", "最新版"],
+  "archive_markers": ["旧版", "已替代", "重复"],
+  "ai_mappings": {"WorkBuddy": "wbdy", "Codex": "cdx", "Accio": "aci"},
+  "project_exceptions": {}
+}
