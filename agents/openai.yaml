@@ -1,6 +1,6 @@
 interface:
   display_name: "团队项目文件治理"
   short_description: "建立、巡检、归类并安全整改团队项目文件树与归档结构"
-  default_prompt: "Use $manage-project-files to inspect this workspace, explain the standard file tree, and propose safe actions before changing anything."
+  default_prompt: "使用 $manage-project-files 巡检当前工作区，说明标准文件树，并在修改任何文件前先给出安全的整改方案。"
 policy:
   allow_implicit_invocation: true

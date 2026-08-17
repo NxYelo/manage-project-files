@@ -1,58 +1,171 @@
 ---
 name: manage-project-files
-description: Establish, explain, inspect, and safely remediate governed team project workspaces and project file trees. Use when Codex needs to create a workspace or YYYYMM project structure, explain what belongs in each folder, classify a file, audit directory and naming compliance, produce a remediation plan, apply explicitly approved moves or renames, verify fixes, or prepare project closeout and knowledge promotion. Supports Chinese Windows paths and keeps all mutations preview-first and confirmation-gated.
+description: 建立、解释、巡检和安全整改团队项目工作区与项目文件树。用于创建团队工作区或“YYYYMM 项目名”标准目录、说明每个文件夹的用途与流转、判断文件应放在哪里、检查目录与命名合规、生成整改计划、执行用户明确批准的移动或改名、整改后复检，以及项目结案归档和知识沉淀。当用户提出“新建项目目录”“文件应该放哪里”“巡检工作区”“整理项目文件”“生成或执行整改计划”“项目归档”等请求时使用。支持中文 Windows 路径，所有写操作默认先预览、经确认后执行。
 ---
 
-# Manage Project Files
+# 团队项目文件治理
 
-Use the bundled command-line tool for deterministic work. Keep client files, live paths, credentials, team-specific AI mappings, and project exceptions outside this reusable package.
+使用本 Skill 建立统一、可解释、可巡检、可安全整改的团队项目文件体系。优先调用随附脚本执行确定性操作；把客户文件、真实工作路径、账号凭据、团队专属 AI 映射和项目临时例外保存在 Skill 包之外。
 
-## Core rules
+## 调用方式
 
-1. Treat the workspace, active project, archive, and external knowledge base as separate layers.
-2. Require the eight project directories in `references/governance.md`. Create `99_未归档` only when requested.
-3. Classify by content nature, authority, maturity, and current state. If evidence is insufficient, place or recommend the file under `00_输入待分配`; never guess.
-4. Keep one current version per topic. Move superseded copies to `98_历史归档` and mark them `旧版`, `已替代`, or `重复`.
-5. Treat the project root as an entry surface, not a business-file store. Allow approved `00_*.md` files and configured infrastructure directories only.
-6. Never delete permanently. Preview every write. Require explicit user approval before applying a remediation plan.
-7. Do not weaken the required tree, preview gate, no-delete rule, or source-change checks through project exceptions.
+- 自动调用：用户以自然语言提出建立项目树、解释目录、文件归类、工作区巡检、整改、复检、结案归档或知识沉淀请求时触发。
+- 显式调用：使用 `$manage-project-files`，例如：
+  - `$manage-project-files 新建“202609 某项目”并生成完整目录树`
+  - `$manage-project-files 这个文件应该放在哪个文件夹？`
+  - `$manage-project-files 巡检整个工作区，先不要修改`
+  - `$manage-project-files 执行刚才确认的整改计划`
 
-Read `references/governance.md` when explaining folder purpose, flow, precedence, naming, or controlled exceptions. Read `references/configuration.md` when a workspace needs custom paths, AI mappings, infrastructure allowlists, or project exceptions.
+## 输入要求
 
-## Run the tool
+### 最少输入
 
-Locate `scripts/manage_project_files.py`, then use the available Python runtime. On Windows, run with `-X utf8`. If `python` and `py` are unavailable, use Codex workspace dependency discovery and call the returned bundled Python executable directly; do not download or install another interpreter merely to run this Skill.
+- 建立工作区：目标工作区路径。
+- 建立项目：工作区路径和符合 `YYYYMM 项目名` 的项目名称。
+- 文件归类：文件名，以及能判断内容性质、约束力、成熟度和当前状态的说明。
+- 巡检或复检：工作区路径。
+- 执行整改：整改计划路径、用户明确批准的操作 ID 和确认口令。
 
-### Create structures
+### 推荐输入
 
-- Preview a workspace: `python -X utf8 manage_project_files.py init-workspace --root <path> [--knowledge-root <path>]`
-- Create after approval: add `--apply`.
-- Preview a project: `python -X utf8 manage_project_files.py init-project --root <workspace> --name "YYYYMM 项目名" [--with-unfiled]`
-- Create after approval: add `--apply`.
+- 外部知识库路径。
+- 团队 AI 名称与文件后缀映射。
+- 允许保留的技术目录白名单。
+- 项目输入消化时限和受控例外。
+- 文件来源、是否为原件、是否已确认、是否当前有效、是否跨项目验证等背景。
 
-Never pass `--apply` until the user has seen the preview or explicitly requested immediate creation.
+### 可选输入
 
-### Classify
+- 是否建立 `99_未归档`。
+- 输出使用 Markdown 或 JSON。
+- 根目录散放文件到标准目录的人工确认映射。
+- 项目结案依据和知识提升目标。
 
-Run `classify --name <filename> --kind <kind>`. Prefer an explicit kind based on the user's description. Valid kinds are `unknown`, `requirement`, `planning`, `reference`, `execution`, `knowledge`, `obsolete`, `misc`, and `temporary`. If details remain ambiguous, use `unknown`.
+## 缺少信息时的处理
 
-### Audit and verify
+1. 未提供工作区路径时，先从当前环境和已给出的文件位置中查找；存在多个候选或无法确定时，再向用户确认，不猜测路径。
+2. 未提供外部政策配置时，使用 `references/default-policy.json`，不得自行放宽规则。
+3. 无法判断文件性质时，归类或建议到 `00_输入待分配`，并指出还缺少什么信息。
+4. 未获得写操作确认时，只输出预览、巡检报告或整改计划，不传入 `--apply`，不执行移动和改名。
+5. 未提供逐文件目标映射时，把含糊的根目录业务文件标为人工复核，不自动分类。
+6. `python` 和 `py` 不可用时，通过 Codex 工作区依赖发现功能取得内置 Python 路径；不要仅为运行本 Skill 另行下载解释器。
+7. 用户只要求“看看怎么整改”时，在对话中展示方案，不落盘计划文件；只有用户明确要求生成可执行整改计划时，才使用 `--output` 写出计划 JSON，并说明其保存位置。
 
-Run `audit --root <workspace> --format markdown` for a read-only report. Use `--config <policy.json>` when a workspace has approved exceptions. Run `verify` after changes; it returns a failing exit code while issues remain.
+## 标准文件体系
 
-### Remediate
+工作区使用项目层、外部知识层和归档层：
 
-1. Run `plan-fix --root <workspace> --output <plan.json>`.
-2. Review every action with the user. `review` items are informational and cannot execute. When a mapping resolves an existing review item, the plan intentionally retains the audit evidence and adds a separate executable action; approve only the executable action ID.
-3. For ambiguous root files, prepare an external mapping JSON from relative source path to a standard destination folder and regenerate with `--mapping <mapping.json>`.
-4. Apply only approved action IDs: `apply --plan <plan.json> --approve A001,A002 --confirm APPLY`.
-5. Run `verify` and report resolved, remaining, and skipped items.
+```text
+团队工作区/
+├── 00_工作区文件管理规则.md
+├── 00_巡检清单.md
+├── 00_项目总索引.md
+├── YYYYMM 项目名/
+│   ├── 00_README.md
+│   ├── 00_文件分类与归档规则.md
+│   ├── 00_输入待分配/
+│   ├── 01_需求输入/
+│   ├── 02-项目策划/
+│   ├── 03_参考资料/
+│   ├── 04_项目执行资料/
+│   ├── 05_知识沉淀/
+│   ├── 98_历史归档/
+│   ├── 99_未归档/          # 可选
+│   └── temp/
+└── 归档/
+    └── YYYYMM 已结案项目/
+```
 
-Abort rather than overwrite an existing destination, escape the workspace root, or act on a source whose fingerprint changed after planning.
+外部知识库使用 `README.md`、`方法论/`、`SOP/`、`模板/` 和 `案例与复盘/`。读取 `references/governance.md` 获取每个目录的“用途、不收什么、后续流向”、判断顺序、命名、版本、优先级和受控例外完整说明。
 
-## Output expectations
+严格使用目录名 `02-项目策划`：编号与名称之间是短横线，不是下划线。
 
-- Lead with the current compliance status or proposed destination.
-- Explain each classification using purpose, prohibited content, and next flow.
-- Separate automatic safe fixes from human-review items.
-- State clearly whether any files were actually created, moved, or renamed.
+## 核心规则
+
+1. 区分工作区、进行中项目、整体归档和外部知识库，不混用职责。
+2. 强制保留八个标准项目目录；仅在需要时建立 `99_未归档`。
+3. 按内容性质、约束力、成熟度和当前状态分类；证据不足时进入 `00_输入待分配`。
+4. 同一主题只保留一个当前有效版本；旧版改名后进入 `98_历史归档`，并标注 `旧版`、`已替代` 或 `重复`。
+5. 项目根目录只作为入口层；仅允许获准的 `00_*.md` 和配置白名单中的技术目录，不散放业务文件。
+6. 永不永久删除文件。所有写操作先预览，整改计划必须由用户明确批准后执行。
+7. 项目例外只能缩短时限、增加技术目录白名单或补充分流规则；不得取消标准树、预览确认、无删除和源文件变化校验。
+
+当需要自定义真实路径、AI 映射、技术目录白名单或项目例外时，读取 `references/configuration.md`。
+
+## 运行工具
+
+定位 `scripts/manage_project_files.py`，使用当前环境可用的 Python。Windows 中使用 `-X utf8`；脚本本身也会主动将控制台输出切换为 UTF-8。
+
+### 建立工作区
+
+先预览：
+
+```text
+python -X utf8 manage_project_files.py init-workspace --root <工作区路径> [--knowledge-root <知识库路径>]
+```
+
+用户确认后追加 `--apply`。已存在的文件和目录保持不变，不覆盖现有内容。
+
+### 建立项目
+
+先预览：
+
+```text
+python -X utf8 manage_project_files.py init-project --root <工作区路径> --name "YYYYMM 项目名" [--with-unfiled]
+```
+
+用户确认后追加 `--apply`。自动建立目录、项目 README、项目分类规则，并幂等更新项目总索引。
+
+### 判断文件归属
+
+运行：
+
+```text
+python -X utf8 manage_project_files.py classify --name <文件名> --kind <类型>
+```
+
+类型与目标目录：
+
+| 类型 | 目标目录 |
+|---|---|
+| `unknown` | `00_输入待分配` |
+| `requirement` | `01_需求输入` |
+| `planning` | `02-项目策划` |
+| `reference` | `03_参考资料` |
+| `execution` | `04_项目执行资料` |
+| `knowledge` | `05_知识沉淀` |
+| `obsolete` | `98_历史归档` |
+| `misc` | `99_未归档` |
+| `temporary` | `temp` |
+
+根据用户给出的事实选择明确类型；仍含糊时必须使用 `unknown`。
+
+### 巡检与复检
+
+- 只读巡检：`audit --root <工作区> --format markdown`
+- 使用外部配置：追加 `--config <policy.json>`
+- 整改后复检：`verify --root <工作区>`
+
+巡检只报告问题，不修改、移动、重命名或删除任何文件。`verify` 在仍有问题时返回非零退出码。
+
+### 生成并执行整改计划
+
+1. 生成计划：`plan-fix --root <工作区> --output <plan.json>`。
+2. 向用户逐项展示操作 ID、源位置、目标位置、原因及是否可执行。
+3. `review` 项仅供人工复核，永远不能直接执行。
+4. 对含糊根目录文件，创建位于 Skill 外的映射 JSON，再追加 `--mapping <mapping.json>` 重新生成计划。
+5. 映射解决原复核项时，计划会保留原始审计证据，并另增一个可执行操作；只批准新增的可执行操作 ID。
+6. 用户明确说“把这个文件归到04”等具体指令，可以作为该文件的分类映射依据；这只授权生成映射后的计划，不等于批准移动文件。
+7. 执行批准项：`apply --plan <plan.json> --approve A001,A002 --confirm APPLY`。必须同时具备具体操作 ID 和 `APPLY` 确认。
+8. 执行后运行 `verify`，分别报告已解决、仍存在和未执行的事项。
+
+目标已存在、路径越出工作区，或者源文件在计划生成后发生变化时，停止全部选定操作，不覆盖文件。
+
+## 输出规范
+
+- 先给出当前合规状态、建议目录或执行结果。
+- 解释归类时同时说明用途、不应包含的内容和下一步流向。
+- 将自动可执行项与需要人工判断的复核项分开。
+- 明确说明是否真的创建、移动或重命名了文件。
+- 巡检报告标明“仅只读检查”；整改报告标明执行的操作 ID 和未执行项。
+- 不把未确认的分类或整改建议表述为已经完成。
